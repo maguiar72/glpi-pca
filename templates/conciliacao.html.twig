@@ -1,0 +1,48 @@
+<div class="container-fluid">
+  <div class="d-flex align-items-center mb-3">
+    <h2 class="mb-0 d-flex align-items-center"><i class="ti ti-arrows-diff me-1"></i> PCA <select class="form-select form-select-sm d-inline-block w-auto mx-1 pca-ano" aria-label="Exercício">
+        {% for a in anos %}<option value="{{ url_base }}?exercicio={{ a }}"{{ a == exercicio ? ' selected' : '' }}>{{ a }}</option>{% endfor %}
+      </select> - Conciliação com o PNCP</h2>
+    {% if pode_sincronizar %}
+      <form method="post" class="ms-auto">
+        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-primary" name="sincronizar" value="1"><i class="ti ti-refresh"></i> Ler o PNCP agora</button>
+      </form>
+    {% endif %}
+  </div>
+  <div class="alert alert-info d-block">
+    {% if fonte_tipo == 'plugin' %}Itens do PNCP vindos do plugin PNCP (monitoramento da UASG, atualizado automaticamente){% else %}Espelho do PNCP{% endif %}: {{ sync.qtd }} itens da UASG {{ uasg }}{% if sync.ultima %}, lidos em {{ sync.ultima|formatted_datetime }}{% endif %}.
+    O valor do PNCP (valorTotal) é comparado com o <b>{{ base_valor }}</b> do cadastro. A ligação é feita pelo campo "Código no PNCP".
+  </div>
+  <div class="mb-3">
+    {% for sit, qtd in resumo %}
+      <span class="badge bg-secondary-lt me-1 mb-1">{{ sit }}: {{ qtd }}</span>
+    {% endfor %}
+  </div>
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-vcenter card-table table-sm table-hover">
+        <thead><tr>
+          <th>Apelido</th><th>Requisitante</th><th>N.PCA</th><th>Código no PNCP</th><th>Objeto no PNCP</th>
+          <th class="text-end">{{ base_valor }} no cadastro</th><th class="text-end">valorTotal no PNCP</th>
+          <th class="text-end">Diferença</th><th>Data limite</th><th>Data no PNCP</th><th>Situação</th>
+        </tr></thead>
+        <tbody>
+          {% for l in linhas %}
+            {% set cor = l.situacao == 'Confere' ? 'bg-green-lt' : (l.situacao == 'Valor divergente' ? 'bg-red-lt' : (l.situacao starts with 'Marcada' ? 'bg-secondary-lt' : 'bg-yellow-lt')) %}
+            <tr>
+              <td>{% if l.id %}<a href="{{ url_form }}?id={{ l.id }}"><b>{{ l.apelido }}</b></a>{% endif %}</td>
+              <td>{{ l.requisitante }}</td><td>{{ l.numero_pca }}</td><td>{{ l.codigo }}</td><td>{{ l.objeto_pncp }}</td>
+              <td class="text-end">{{ call('GlpiPlugin\\Pca\\Calculo::reais', [l.valor_cadastro]) }}</td>
+              <td class="text-end">{{ call('GlpiPlugin\\Pca\\Calculo::reais', [l.valor_pncp]) }}</td>
+              <td class="text-end">{{ call('GlpiPlugin\\Pca\\Calculo::reais', [l.diferenca]) }}</td>
+              <td>{{ l.data_cadastro ? l.data_cadastro|formatted_date : '' }}</td>
+              <td>{{ l.data_pncp ? l.data_pncp|formatted_date : '' }}</td>
+              <td><span class="badge {{ cor }}">{{ l.situacao }}</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

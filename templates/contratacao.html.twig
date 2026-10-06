@@ -1,0 +1,68 @@
+{% extends 'generic_show_form.html.twig' %}
+{% import 'components/form/fields_macros.html.twig' as fields %}
+
+{% block form_fields %}
+    {{ fields.smallTitle('Identificação', 'ti ti-id') }}
+    {{ fields.textField('name', item.fields['name'], 'Apelido', {
+        helper: 'Nome curto usado nos canais do Teams e nos painéis de BI. Sem / \\ : * ? " < > | # % &.'
+    }) }}
+    {{ fields.numberField('exercicio', item.fields['exercicio'] ?: exercicio_padrao, 'Exercício', {min: 2020, max: 2100}) }}
+    {{ fields.textField('numero_pca', item.fields['numero_pca'], 'N.PCA') }}
+    {{ fields.textField('pncp_grupo_codigo', item.fields['pncp_grupo_codigo'], 'Código no PNCP', {
+        helper: 'grupoContratacaoCodigo do plano publicado, por exemplo 90026-134/2027.'
+    }) }}
+    {{ fields.dropdownArrayField('prioridade', item.fields['prioridade'], prioridades, 'Prioridade', {display_emptychoice: true}) }}
+    {{ fields.dropdownArrayField('destinacao', item.fields['destinacao'], listas.destinacao, 'Destinação', {display_emptychoice: true}) }}
+    {{ fields.dropdownField('Group', 'groups_id', item.fields['groups_id'], 'Unidade requisitante', {entity: item.fields['entities_id']}) }}
+    {{ fields.textField('requisitante', item.fields['requisitante'], 'Requisitante (sigla)', {
+        helper: 'Preenchido automaticamente com a sigla do grupo, quando informado.'
+    }) }}
+    {{ fields.textareaField('objeto', item.fields['objeto'], 'Objeto', {full_width: true, rows: 3}) }}
+    {{ fields.textareaField('justificativa', item.fields['justificativa'], 'Justificativa', {full_width: true, rows: 4}) }}
+
+    {{ fields.smallTitle('Planejamento', 'ti ti-calendar-event') }}
+    {{ fields.dropdownArrayField('tipo', item.fields['tipo'], listas.tipo, 'Tipo', {display_emptychoice: true}) }}
+    {{ fields.dropdownArrayField('origem', item.fields['origem'], listas.origem, 'Origem', {display_emptychoice: true}) }}
+    {{ fields.dropdownArrayField('status', item.fields['status'], listas.status, 'Status', {display_emptychoice: true}) }}
+    {{ fields.textField('processo_sei', item.fields['processo_sei'], 'Processo SEI') }}
+    {{ fields.dropdownArrayField('necessidade', item.fields['necessidade'], listas.necessidade, 'Necessidade', {
+        display_emptychoice: true,
+        helper: 'Remover tira a contratação dos totais e do painel, sem apagá-la.'
+    }) }}
+    {{ fields.dropdownYesNo('conferido', item.fields['conferido'], 'Conferido pela área') }}
+
+    {{ fields.smallTitle('Prazo e valores', 'ti ti-currency-real') }}
+    {{ fields.dateField('data_limite', item.fields['data_limite'], 'Data limite', {clearable: true}) }}
+    {{ fields.numberField('vigencia_meses', item.fields['vigencia_meses'], 'Vigência (meses)', {min: 0, max: 180}) }}
+    {{ fields.dropdownArrayField('pagamento', item.fields['pagamento'], listas.pagamento, 'Pagamento', {display_emptychoice: true}) }}
+    {{ fields.nullField() }}
+    {{ fields.numberField('valor_unico', item.fields['valor_unico'], 'Valor de pagamento único (R$)', {
+        min: 0, step: 0.01,
+        helper: 'Valor total pago de uma só vez. Entra inteiro no Valor Anual e no Valor Global.'
+    }) }}
+    {{ fields.numberField('valor_cheio_ano', item.fields['valor_cheio_ano'], 'Valor cheio no ano - parcelado (R$)', {
+        min: 0, step: 0.01,
+        helper: 'Valor de 12 meses cheios, mesmo que o contrato comece no meio do ano.'
+    }) }}
+    {% if not item.isNewItem() %}
+        {{ fields.readOnlyField('_meses', item.fields['meses_exercicio'], 'Meses no exercício (automático)') }}
+        {{ fields.readOnlyField('_pval', prioridade_valor, 'Prioridade indicada pelo Valor Global') }}
+        {{ fields.readOnlyField('_van', call('GlpiPlugin\\Pca\\Calculo::reais', [item.fields['valor_anual']]), 'Valor Anual (automático)') }}
+        {{ fields.readOnlyField('_vgl', call('GlpiPlugin\\Pca\\Calculo::reais', [item.fields['valor_global']]), 'Valor Global (automático)') }}
+    {% endif %}
+
+    {{ fields.smallTitle('Revisão', 'ti ti-checklist') }}
+    {% if not item.isNewItem() %}
+        {{ fields.readOnlyField('_pend', item.fields['pendencias'] ?: 'Nenhuma', 'Pendências (automático)', {full_width: true}) }}
+    {% endif %}
+    {{ fields.textareaField('observacoes', item.fields['observacoes'], 'Observações da área', {full_width: true, rows: 3}) }}
+    {{ fields.textareaField('nota_revisao', item.fields['nota_revisao'], 'Nota da revisão', {full_width: true, rows: 3}) }}
+
+    {{ fields.smallTitle('Vínculos', 'ti ti-link') }}
+    {{ fields.dropdownField('Project', 'projects_id', item.fields['projects_id'], 'Projeto da contratação', {entity: item.fields['entities_id']}) }}
+    {{ fields.dropdownField('Contract', 'contracts_id', item.fields['contracts_id'], 'Contrato resultante', {entity: item.fields['entities_id']}) }}
+    {% if not item.isNewItem() and (item.fields['valor_anual_original'] is not null or item.fields['valor_global_original'] is not null) %}
+        {{ fields.readOnlyField('_oan', call('GlpiPlugin\\Pca\\Calculo::reais', [item.fields['valor_anual_original']]), 'Valor Anual na planilha original') }}
+        {{ fields.readOnlyField('_ogl', call('GlpiPlugin\\Pca\\Calculo::reais', [item.fields['valor_global_original']]), 'Valor Global na planilha original') }}
+    {% endif %}
+{% endblock %}

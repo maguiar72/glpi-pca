@@ -1,0 +1,40 @@
+{% import 'components/form/fields_macros.html.twig' as fields %}
+<div class="container-fluid">
+  <form method="post" class="card">
+    <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token() }}">
+    <div class="card-header"><h3 class="card-title"><i class="ti ti-settings"></i> PCA - Parâmetros</h3></div>
+    <div class="card-body">
+      <div class="row">
+        {{ fields.smallTitle('Exercício e regra de cálculo') }}
+        {{ fields.numberField('exercicio', p.exercicio, 'Exercício de referência', {min: 2020, max: 2100}) }}
+        {{ fields.numberField('pca_estimativa', p.pca_estimativa, 'Estimativa anual do PCA do órgão (R$)', {min: 0, step: 0.01, helper: 'Atual: ' ~ call('GlpiPlugin\\Pca\\Calculo::reais', [p.pca_estimativa])}) }}
+        {{ fields.dropdownArrayField('inclui_mes_limite', p.inclui_mes_limite, {1: 'Sim - maio conta 8 meses', 0: 'Não - maio conta 7 meses'}, 'Contar o mês da data limite') }}
+        {{ fields.numberField('apelido_max', p.apelido_max, 'Tamanho máximo do apelido', {min: 5, max: 50}) }}
+        {{ fields.numberField('faixa_alta', p.faixa_alta, 'Prioridade 1 acima de (R$)', {min: 0, step: 0.01, helper: 'Atual: ' ~ call('GlpiPlugin\\Pca\\Calculo::reais', [p.faixa_alta])}) }}
+        {{ fields.numberField('faixa_media', p.faixa_media, 'Prioridade 2 a partir de (R$)', {min: 0, step: 0.01, helper: 'Atual: ' ~ call('GlpiPlugin\\Pca\\Calculo::reais', [p.faixa_media])}) }}
+
+        {{ fields.smallTitle('PNCP') }}
+        {{ fields.urlField('pncp_base_url', p.pncp_base_url, 'Endereço da API do PNCP') }}
+        {{ fields.textField('cnpj_orgao', p.cnpj_orgao, 'CNPJ do órgão no PNCP', {helper: 'Somente números, 14 dígitos.'}) }}
+        {{ fields.textField('uasg', p.uasg, 'Código da unidade (UASG)', {helper: 'Código da unidade gestora do PCA no PNCP.'}) }}
+        {{ fields.numberField('categoria_tic', p.categoria_tic, 'Categoria de item do PCA para TIC (código, espelho próprio)', {min: 1, max: 20}) }}
+        {{ fields.textField('categoria_tic_nome', p.categoria_tic_nome, 'Categoria de item do PCA para TIC (nome, plugin PNCP)') }}
+        {{ fields.dropdownArrayField('pncp_valor_total', p.pncp_valor_total, {'anual': 'Valor Anual', 'global': 'Valor Global'}, 'O valorTotal do PNCP corresponde ao') }}
+
+        {{ fields.smallTitle('Listas suspensas (um item por linha)') }}
+        {{ fields.textareaField('lista_destinacao', p.lista_destinacao, 'Destinação', {rows: 4}) }}
+        {{ fields.textareaField('lista_tipo', p.lista_tipo, 'Tipo', {rows: 4}) }}
+        {{ fields.textareaField('lista_status', p.lista_status, 'Status', {rows: 9}) }}
+        {{ fields.textareaField('lista_origem', p.lista_origem, 'Origem', {rows: 4}) }}
+        {{ fields.textareaField('lista_necessidade', p.lista_necessidade, 'Necessidade', {rows: 4, helper: 'O valor "Remover" tira a linha dos totais; "Avaliar" gera pendência.'}) }}
+        {{ fields.textareaField('lista_pagamento', p.lista_pagamento, 'Pagamento', {rows: 4, helper: 'As regras de pendência usam os nomes "Único", "Parcelado" e "Único e parcelado".'}) }}
+
+        {{ fields.smallTitle('Aplicação') }}
+        {{ fields.dropdownYesNo('recalcular', 0, 'Recalcular todas as contratações ao gravar') }}
+      </div>
+    </div>
+    <div class="card-footer text-end">
+      <button class="btn btn-primary" name="update" value="1"><i class="ti ti-device-floppy"></i> Gravar</button>
+    </div>
+  </form>
+</div>
