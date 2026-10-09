@@ -27,6 +27,7 @@
         {{ fields.textareaField('lista_status', p.lista_status, 'Status', {rows: 9}) }}
         {{ fields.textareaField('lista_origem', p.lista_origem, 'Origem', {rows: 4}) }}
         {{ fields.textareaField('lista_necessidade', p.lista_necessidade, 'Necessidade', {rows: 4, helper: 'O valor "Remover" tira a linha dos totais; "Avaliar" gera pendência.'}) }}
+        {{ fields.textareaField('lista_requisitante', p.lista_requisitante, 'Requisitante (áreas)', {rows: 6, helper: 'Áreas fixas do combo. Quem edita a contratação também pode digitar uma área nova; ela passa a aparecer no combo.'}) }}
         {{ fields.textareaField('lista_pagamento', p.lista_pagamento, 'Pagamento', {rows: 4, helper: 'As regras de pendência usam os nomes "Único", "Parcelado" e "Único e parcelado".'}) }}
 
         {{ fields.smallTitle('Aplicação') }}

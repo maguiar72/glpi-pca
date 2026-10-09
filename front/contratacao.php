@@ -35,4 +35,7 @@ echo "</select></div>";
 echo Html::scriptBlock("document.querySelectorAll('select.pca-ano').forEach(function (s) { s.addEventListener('change', function () { window.location.href = s.value; }); });");
 
 Search::show(Contratacao::class);
+
+// Funil estilo Excel nos títulos de Destinação, Requisitante, Prioridade, Conferido e Tipo
+\GlpiPlugin\Pca\Funil::imprimir((array) ($params['criteria'] ?? []), $base);
 Html::footer();

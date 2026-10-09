@@ -2,7 +2,7 @@
 
 Cadastro das contratações do **Plano de Contratações Anual (PCA)**, com cálculo automático de Valor Anual e Valor Global, pendências de preenchimento, painel por exercício e conciliação com o plano publicado no PNCP.
 
-- **Versão:** 0.1.5 (protótipo)
+- **Versão:** 0.1.7 (protótipo)
 - **GLPI:** 11.0.x · **PHP:** 8.2+ · **Idioma:** apenas português
 - **Licença:** GPLv3+ (arquivo `LICENSE`)
 
@@ -83,6 +83,13 @@ php bin/console plugin:uninstall pca
 A desinstalação apaga as tabelas do plugin e os dados.
 
 ## Histórico
+
+### 0.1.7
+- Funil estilo Excel nos títulos de Destinação, Requisitante, Prioridade, Conferido pela área e Tipo: cada seleção vira um grupo de critérios "OU" do GLPI (ordenação, paginação, busca salva e exportação continuam funcionando).
+
+### 0.1.6
+- Requisitante em caixa de seleção (áreas dos Parâmetros e já usadas), com inclusão de novas áreas; a sigla do grupo só preenche o campo quando ele está vazio.
+- Valor de pagamento único com máscara em R$ (aceita `1.234,56` e `R$ 1.234,56`).
 
 ### 0.1.5
 - Repositório genérico: CNPJ, UASG e listas suspensas padrão neutros (configuráveis em Parâmetros); mensagem clara quando CNPJ/UASG não estão informados.

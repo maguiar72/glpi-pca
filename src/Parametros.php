@@ -31,6 +31,7 @@ class Parametros
             'lista_status'       => "Não iniciado\nEspecificação e minuta de DOD\nDOD encaminhado\nAguardando especificações para envio do DOP\nDOP encaminhado\nPlanejamento em andamento\nPlanejamento concluído\nContratado",
             'lista_origem'       => "PCA do exercício\nMigrado do PCA anterior",
             'lista_necessidade'  => "Manter\nRemover\nAvaliar",
+            'lista_requisitante' => '', // áreas fixas do combo Requisitante; as já usadas nas contratações entram sozinhas
             'lista_pagamento'    => "Único\nParcelado\nÚnico e parcelado",
         ];
     }

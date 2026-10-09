@@ -47,6 +47,35 @@ class Contratacao extends CommonDBTM
         return $anos;
     }
 
+    /** Áreas do combo Requisitante: as dos Parâmetros mais as já usadas no cadastro (ordem alfabética). */
+    public static function requisitantes(): array
+    {
+        global $DB;
+        $out = Parametros::lista('requisitante');
+        foreach ($DB->request(['SELECT' => 'requisitante', 'DISTINCT' => true, 'FROM' => self::getTable(),
+            'WHERE' => ['NOT' => ['requisitante' => null]]]) as $r) {
+            $x = trim((string) $r['requisitante']);
+            if ($x !== '') {
+                $out[$x] = $x;
+            }
+        }
+        ksort($out, SORT_NATURAL | SORT_FLAG_CASE);
+        return $out;
+    }
+
+    /** Aceita "1.234,56", "R$ 1.234,56" ou "1234.56" e devolve o número com ponto decimal. */
+    public static function numeroBR($v)
+    {
+        if (!is_string($v) || $v === '' || $v === 'NULL') {
+            return $v;
+        }
+        $x = trim(str_replace(['R$', ' ', "\xC2\xA0"], '', $v));
+        if (strpos($x, ',') !== false) {
+            $x = str_replace(',', '.', str_replace('.', '', $x));
+        }
+        return is_numeric($x) ? $x : $v;
+    }
+
     /** Exercício escolhido por último na sessão (lista, painel ou conciliação); senão o dos parâmetros. */
     public static function exercicioEscolhido(): int
     {
@@ -147,6 +176,11 @@ class Contratacao extends CommonDBTM
     /** Recalcula meses, valores e pendências a partir dos dados informados. */
     private function calcular(array $input, array $atual): array
     {
+        foreach (['valor_unico', 'valor_cheio_ano'] as $c) {
+            if (array_key_exists($c, $input)) {
+                $input[$c] = self::numeroBR($input[$c]);
+            }
+        }
         foreach (['valor_unico', 'valor_cheio_ano', 'prioridade', 'vigencia_meses', 'data_limite',
             'valor_anual_original', 'valor_global_original'] as $c) {
             if (array_key_exists($c, $input) && ($input[$c] === '' || $input[$c] === 'NULL')) {
@@ -175,7 +209,12 @@ class Contratacao extends CommonDBTM
             return $x === 'NULL' ? null : $x;
         };
 
-        if (!empty($input['groups_id'])) {
+        // Requisitante escolhido no combo prevalece; a sigla do grupo só entra quando ficou vazio
+        $req = array_key_exists('requisitante', $input) ? trim((string) $input['requisitante']) : trim((string) ($atual['requisitante'] ?? ''));
+        if (array_key_exists('requisitante', $input)) {
+            $input['requisitante'] = $req;
+        }
+        if ($req === '' && !empty($input['groups_id'])) {
             $g = new Group();
             if ($g->getFromDB((int) $input['groups_id'])) {
                 $input['requisitante'] = $g->fields['code'] ?: $g->fields['name'];
@@ -277,6 +316,7 @@ class Contratacao extends CommonDBTM
             'prioridades' => [1 => '1 - Alta', 2 => '2 - Média', 3 => '3 - Baixa'],
             'prioridade_valor' => Calculo::prioridadePorValor($vg, (float) $p['faixa_alta'], (float) $p['faixa_media']),
             'exercicio_padrao' => (int) $p['exercicio'],
+            'requisitantes' => self::requisitantes(),
         ]);
         return true;
     }

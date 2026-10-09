@@ -9,7 +9,7 @@ use Glpi\Plugin\Hooks;
 use GlpiPlugin\Pca\Contratacao;
 use GlpiPlugin\Pca\Perfil;
 
-define('PLUGIN_PCA_VERSION', '0.1.5');
+define('PLUGIN_PCA_VERSION', '0.1.7');
 define('PLUGIN_PCA_MIN_GLPI', '11.0.0');
 define('PLUGIN_PCA_MAX_GLPI', '11.0.99');
 

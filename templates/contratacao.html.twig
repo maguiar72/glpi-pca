@@ -14,8 +14,31 @@
     {{ fields.dropdownArrayField('prioridade', item.fields['prioridade'], prioridades, 'Prioridade', {display_emptychoice: true}) }}
     {{ fields.dropdownArrayField('destinacao', item.fields['destinacao'], listas.destinacao, 'Destinação', {display_emptychoice: true}) }}
     {{ fields.dropdownField('Group', 'groups_id', item.fields['groups_id'], 'Unidade requisitante', {entity: item.fields['entities_id']}) }}
-    {{ fields.textField('requisitante', item.fields['requisitante'], 'Requisitante (sigla)', {
-        helper: 'Preenchido automaticamente com a sigla do grupo, quando informado.'
+    {% set _req = item.fields['requisitante'] %}
+    {% set _reqhtml %}
+        <select name="requisitante" id="pca_requisitante" class="form-select" style="width:100%">
+            <option value=""></option>
+            {% for r in requisitantes %}
+                <option value="{{ r }}" {{ r == _req ? 'selected' }}>{{ r }}</option>
+            {% endfor %}
+            {% if _req and _req not in requisitantes %}
+                <option value="{{ _req }}" selected>{{ _req }}</option>
+            {% endif %}
+        </select>
+        <script>
+            $(function () {
+                $('#pca_requisitante').select2({
+                    width: '100%', tags: true, allowClear: true, placeholder: 'Selecione ou digite uma nova área',
+                    createTag: function (t) {
+                        var v = $.trim(t.term);
+                        return v === '' ? null : {id: v, text: v + ' (nova área)'};
+                    }
+                });
+            });
+        </script>
+    {% endset %}
+    {{ fields.field('requisitante', _reqhtml, 'Requisitante (sigla)', {
+        helper: 'Escolha uma área da lista ou digite uma nova. Se ficar vazio, usa a sigla da unidade requisitante.'
     }) }}
     {{ fields.textareaField('objeto', item.fields['objeto'], 'Objeto', {full_width: true, rows: 3}) }}
     {{ fields.textareaField('justificativa', item.fields['justificativa'], 'Justificativa', {full_width: true, rows: 4}) }}
@@ -36,8 +59,25 @@
     {{ fields.numberField('vigencia_meses', item.fields['vigencia_meses'], 'Vigência (meses)', {min: 0, max: 180}) }}
     {{ fields.dropdownArrayField('pagamento', item.fields['pagamento'], listas.pagamento, 'Pagamento', {display_emptychoice: true}) }}
     {{ fields.nullField() }}
-    {{ fields.numberField('valor_unico', item.fields['valor_unico'], 'Valor de pagamento único (R$)', {
-        min: 0, step: 0.01,
+    {% set _vu = item.fields['valor_unico'] is null or item.fields['valor_unico'] == '' ? '' : 'R$ ' ~ item.fields['valor_unico']|number_format(2, ',', '.') %}
+    {% set _vuhtml %}
+        <input type="text" inputmode="decimal" autocomplete="off" name="valor_unico" id="pca_valor_unico"
+               class="form-control" value="{{ _vu }}" placeholder="R$ 0,00">
+        <script>
+            $(function () {
+                var el = document.getElementById('pca_valor_unico');
+                function fmt() {
+                    var d = el.value.replace(/\D/g, '');
+                    if (d === '') { el.value = ''; return; }
+                    var n = (parseInt(d, 10) / 100).toFixed(2).split('.');
+                    el.value = 'R$ ' + n[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + n[1];
+                }
+                el.addEventListener('input', fmt);
+                el.addEventListener('blur', fmt);
+            });
+        </script>
+    {% endset %}
+    {{ fields.field('valor_unico', _vuhtml, 'Valor de pagamento único (R$)', {
         helper: 'Valor total pago de uma só vez. Entra inteiro no Valor Anual e no Valor Global.'
     }) }}
     {{ fields.numberField('valor_cheio_ano', item.fields['valor_cheio_ano'], 'Valor cheio no ano - parcelado (R$)', {
