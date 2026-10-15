@@ -8,6 +8,7 @@
     }) }}
     {{ fields.numberField('exercicio', item.fields['exercicio'] ?: exercicio_padrao, 'Exercício', {min: 2020, max: 2100}) }}
     {{ fields.textField('numero_pca', item.fields['numero_pca'], 'N.PCA') }}
+    {{ fields.textField('numero_pctic', item.fields['numero_pctic'], 'N. PCTIC', {helper: 'Número do PCTIC (Observação do SEI: PCTIC-aaaa-nnn).'}) }}
     {{ fields.textField('pncp_grupo_codigo', item.fields['pncp_grupo_codigo'], 'Código no PNCP', {
         helper: 'grupoContratacaoCodigo do plano publicado, por exemplo 90026-134/2027.'
     }) }}

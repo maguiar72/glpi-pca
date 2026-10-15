@@ -439,7 +439,7 @@ class Sei
 
     /** Rótulo dos campos reconciliáveis. */
     public const CAMPOS = [
-        'numero_pca'     => 'N.PCA',
+        'numero_pctic'   => 'N. PCTIC (da Observação)',
         'objeto'         => 'Objeto',
         'tipo'           => 'Tipo',
         'justificativa'  => 'Justificativa',
@@ -483,11 +483,11 @@ class Sei
         };
         $cmp = static fn (string $a, string $b) => mb_strtolower(trim(preg_replace('/\s+/u', ' ', $a))) === mb_strtolower(trim(preg_replace('/\s+/u', ' ', $b)));
 
+        // N.PCA é da planilha de planejamento; o SEI traz o número do PCTIC (Observação "PCTIC-aaaa-nnn")
         $obs = self::observacao((string) ($sei['observacao'] ?? ''));
-        $num = $obs['numero'] ?? self::numeroDe($item['identificador']);
-        $add('numero_pca', (string) $c['numero_pca'], $num, (string) $c['numero_pca'] === $num, $num !== '',
-            $obs['numero'] !== null ? 'Da Observação (PCTIC)' : 'Do identificador ' . $item['identificador'],
-            ['numero_pca' => $num]);
+        $num = (string) ($obs['numero'] ?? '');
+        $add('numero_pctic', (string) ($c['numero_pctic'] ?? ''), $num, (string) ($c['numero_pctic'] ?? '') === $num,
+            $num !== '', $num === '' ? 'Observação sem PCTIC-aaaa-nnn: nada a aplicar' : '', ['numero_pctic' => $num]);
 
         $add('objeto', (string) $c['objeto'], (string) $sei['descricao'], $cmp((string) $c['objeto'], (string) $sei['descricao']),
             $sei['descricao'] !== '', '', ['objeto' => $sei['descricao']]);
@@ -659,7 +659,7 @@ class Sei
         $in  = [
             'name'         => mb_substr($obs['apelido'] ?: str_replace('/', '-', (string) $item['identificador']), 0, 25),
             'exercicio'    => (int) $item['exercicio'],
-            'numero_pca'   => $obs['numero'] ?? self::numeroDe($item['identificador']),
+            'numero_pctic' => $obs['numero'] ?? '',
             'objeto'       => $sei['descricao'],
             'tipo'         => self::tipo($sei['tipo']) ?? '',
             'justificativa' => $sei['justificativa'],

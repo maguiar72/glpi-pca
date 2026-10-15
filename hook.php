@@ -90,7 +90,7 @@ function plugin_pca_install(): bool
 
     // Campos vindos do módulo Contratações do SEI (aditivo; atualização de instalação existente)
     $novas = [
-        'sei_identificador' => "varchar(30) DEFAULT NULL", 'plano' => "varchar(100) DEFAULT NULL",
+        'sei_identificador' => "varchar(30) DEFAULT NULL", 'numero_pctic' => "varchar(20) DEFAULT NULL", 'plano' => "varchar(100) DEFAULT NULL",
         'programa_trabalho' => "varchar(50) DEFAULT NULL", 'codigo_item' => "varchar(30) DEFAULT NULL",
         'fornecedor' => "varchar(255) DEFAULT NULL", 'cnpj_fornecedor' => "varchar(20) DEFAULT NULL",
         'fim_vigencia' => "date DEFAULT NULL", 'servico' => "tinyint DEFAULT NULL",
