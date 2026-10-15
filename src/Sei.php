@@ -549,6 +549,8 @@ class Sei
             $grava = ['valor_unico' => $total, 'valor_cheio_ano' => 'NULL'];
             $nota  = $pag === '' ? 'Pagamento não definido: o total entra como valor único' : 'Pagamento único: total = valor único';
         }
+        // Parcelado: valor cheio no ano tem 2 casas e é multiplicado por vigência/12; o total pode diferir em centavos
+        $tolerancia = $pag === 'Parcelado' && $vigef ? max(0.01, round($vigef / 12 * 0.005 + 0.005, 3)) : 0.009;
         // O total pode bater e a composição estar errada (ex.: "Parcelado" com o total em valor único)
         $un_ok = !Calculo::vazio($c['valor_unico']);
         $ch_ok = !Calculo::vazio($c['valor_cheio_ano']);
@@ -558,7 +560,7 @@ class Sei
                 . ($ch_ok ? 'valor cheio no ano' : '') . ')');
         }
         $add('valor_global', $vg === null ? '' : (string) $vg, $total === null ? '' : (string) $total,
-            $total !== null && $vg !== null && abs($vg - $total) < 0.01 && $composicao, $apl, $nota, $grava);
+            $total !== null && $vg !== null && abs($vg - $total) <= $tolerancia && $composicao, $apl, $nota, $grava);
 
         // Campos que só vêm da tela de detalhe / Observação; ausentes no SEI não geram divergência
         $txt = static function (string $campo, string $coluna, $valor, string $nota = '') use ($add, $c, $cmp) {
@@ -566,7 +568,12 @@ class Sei
             $add($campo, (string) ($c[$coluna] ?? ''), $valor, $cmp((string) ($c[$coluna] ?? ''), $valor),
                 $valor !== '', $valor === '' ? 'Ausente no SEI: nada a aplicar' : $nota, [$coluna => $valor]);
         };
-        $txt('name', 'name', $obs['apelido'] ?? '', 'Texto após PCTIC-aaaa-nnn na Observação');
+        $ap_sei = (string) ($obs['apelido'] ?? '');
+        $ap_pca = (string) ($c['name'] ?? '');
+        // o apelido da planilha (prioritário) pode detalhar o do SEI: não é divergência
+        $detalha = $ap_sei !== '' && mb_stripos($ap_pca, $ap_sei) === 0;
+        $add('name', $ap_pca, $ap_sei, $detalha || $cmp($ap_pca, $ap_sei), $ap_sei !== '',
+            $ap_sei === '' ? 'Ausente no SEI: nada a aplicar' : 'Texto após PCTIC-aaaa-nnn na Observação', ['name' => $ap_sei]);
         $txt('pagamento', 'pagamento', $obs['pagamento'] ?? '');
         $txt('orcamento', 'orcamento', $obs['orcamento'] ?? '');
         $txt('requisitante', 'requisitante', $obs['area'] ?? '', 'ÁREA DEMANDANTE na Observação');
