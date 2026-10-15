@@ -25,6 +25,7 @@ class Parametros
             'faixa_media'        => '100000',
             'apelido_max'        => 25,
             'pncp_valor_total'   => 'anual',
+            'sei_setor'          => 'CEGOVE', // Unidade requisitante filtrada na carga do SEI
             'pncp_base_url'      => 'https://pncp.gov.br/api/pncp/v1',
             'lista_destinacao'   => "Interna\nExterna\nAmbas",
             'lista_tipo'         => "Nova Contratação\nProrrogação",

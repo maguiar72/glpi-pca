@@ -88,6 +88,48 @@ function plugin_pca_install(): bool
         ) ENGINE=InnoDB DEFAULT CHARSET={$charset} COLLATE={$collation} ROW_FORMAT=DYNAMIC");
     }
 
+    // Campos vindos do módulo Contratações do SEI (aditivo; atualização de instalação existente)
+    $novas = [
+        'sei_identificador' => "varchar(30) DEFAULT NULL", 'plano' => "varchar(100) DEFAULT NULL",
+        'programa_trabalho' => "varchar(50) DEFAULT NULL", 'codigo_item' => "varchar(30) DEFAULT NULL",
+        'fornecedor' => "varchar(255) DEFAULT NULL", 'cnpj_fornecedor' => "varchar(20) DEFAULT NULL",
+        'fim_vigencia' => "date DEFAULT NULL", 'servico' => "tinyint DEFAULT NULL",
+        'mao_de_obra' => "tinyint DEFAULT NULL", 'curta_duracao' => "tinyint DEFAULT NULL",
+        'orcamento' => "varchar(100) DEFAULT NULL", 'observacao_sei' => "text",
+        'vinculos_programacoes' => "text", 'planejamento_estrategico' => "text",
+    ];
+    foreach ($novas as $coluna => $def) {
+        if (!$DB->fieldExists('glpi_plugin_pca_contratacaos', $coluna)) {
+            $DB->doQuery("ALTER TABLE `glpi_plugin_pca_contratacaos` ADD COLUMN `{$coluna}` {$def}");
+        }
+    }
+
+    // Programação de contratações do módulo Contratações do SEI (mandatário), carregada por exportação
+    if (!$DB->tableExists('glpi_plugin_pca_seiitens')) {
+        $DB->doQuery("CREATE TABLE `glpi_plugin_pca_seiitens` (
+            `id` int {$sign} NOT NULL AUTO_INCREMENT,
+            `exercicio` int NOT NULL DEFAULT '0',
+            `identificador` varchar(30) NOT NULL,
+            `codigo` varchar(30) DEFAULT NULL,
+            `descricao` text,
+            `setor` varchar(100) DEFAULT NULL,
+            `valor_total` decimal(20,2) DEFAULT NULL,
+            `raw` longtext,
+            `hash` char(40) DEFAULT NULL,
+            `arquivo` varchar(200) DEFAULT NULL,
+            `contratacao_id` int {$sign} NOT NULL DEFAULT '0',
+            `ausente` tinyint NOT NULL DEFAULT '0',
+            `date_carga` timestamp NULL DEFAULT NULL,
+            `users_id_carga` int {$sign} NOT NULL DEFAULT '0',
+            `date_conciliacao` timestamp NULL DEFAULT NULL,
+            `users_id_conciliacao` int {$sign} NOT NULL DEFAULT '0',
+            `hash_aplicado` char(40) DEFAULT NULL,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `unicidade` (`exercicio`,`identificador`),
+            KEY `contratacao_id` (`contratacao_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET={$charset} COLLATE={$collation} ROW_FORMAT=DYNAMIC");
+    }
+
     // Parâmetros padrão (não sobrescreve o que já existe)
     $atuais = Config::getConfigurationValues('plugin:pca');
     $novos  = array_diff_key(Parametros::padroes(), $atuais);
@@ -139,7 +181,7 @@ function plugin_pca_uninstall(): bool
 {
     global $DB;
 
-    foreach (['glpi_plugin_pca_contratacaos', 'glpi_plugin_pca_pncpitens'] as $t) {
+    foreach (['glpi_plugin_pca_contratacaos', 'glpi_plugin_pca_pncpitens', 'glpi_plugin_pca_seiitens'] as $t) {
         $DB->doQuery("DROP TABLE IF EXISTS `{$t}`");
     }
     $DB->delete('glpi_displaypreferences', ['itemtype' => Contratacao::class]);

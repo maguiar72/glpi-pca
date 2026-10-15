@@ -100,7 +100,7 @@ class Pncp extends CommonGLPI
 
     private static function get(string $url): array
     {
-        $cliente = Toolbox::getGuzzleClient(['timeout' => 90]);
+        $cliente = \GlpiPlugin\Pca\Http::guzzle(['timeout' => 90]);
         $resp = $cliente->request('GET', $url, ['headers' => [
             'Accept'     => 'application/json',
             'User-Agent' => 'Mozilla/5.0 (GLPI plugin PCA)',

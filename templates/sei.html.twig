@@ -1,0 +1,125 @@
+<div class="container-fluid">
+  <div class="d-flex align-items-center mb-3">
+    <h2 class="mb-0 d-flex align-items-center"><i class="ti ti-refresh-dot me-1"></i> PCA <select class="form-select form-select-sm d-inline-block w-auto mx-1 pca-ano" aria-label="Exercício">
+        {% for a in anos %}<option value="{{ url_base }}?exercicio={{ a }}"{{ a == exercicio ? ' selected' : '' }}>{{ a }}</option>{% endfor %}
+      </select> - Reconciliação com o SEI</h2>
+  </div>
+
+  <div class="alert alert-info d-block">
+    O módulo <b>Contratações</b> do SEI é o <b>mandatário</b> do PCA. Exporte a programação do módulo, carregue o arquivo aqui
+    (só entram as linhas da unidade requisitante informada) e reconcilie contratação por contratação: o comparativo mostra
+    SEI × PCA e você escolhe o que aplicar. Nada é gravado no SEI.
+  </div>
+
+  {% if admin %}
+  <div class="card mb-3"><div class="card-body">
+    <form method="post" enctype="multipart/form-data" class="row g-2 align-items-end">
+      <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="exercicio" value="{{ exercicio }}">
+      <div class="col-md-5"><label class="form-label">Arquivo exportado do SEI (.xls, .xlsx ou .csv)</label>
+        <input type="file" name="arquivo" class="form-control" accept=".xls,.xlsx,.csv"></div>
+      <div class="col-md-3"><label class="form-label">Unidade requisitante (filtro)</label>
+        <input type="text" name="setor" class="form-control" value="{{ setor }}" placeholder="CEGOVE"></div>
+      <div class="col-md-3"><button class="btn btn-primary" name="carregar" value="1"><i class="ti ti-upload"></i> Carregar do SEI</button></div>
+    </form>
+  </div></div>
+  {% endif %}
+
+  <div class="mb-3">
+    {% for sit, qtd in resumo %}<span class="badge bg-secondary-lt me-1 mb-1">{{ sit }}: {{ qtd }}</span>{% endfor %}
+    <span class="badge bg-secondary-lt me-1 mb-1">Só no PCA (sem item do SEI): {{ so_pca|length }}</span>
+  </div>
+
+  {% if detalhe %}
+    {% set it = detalhe.item %}
+    <div class="card mb-3 border-primary"><div class="card-header">
+      <h3 class="card-title">{{ it.identificador }} ⇄ <a href="{{ url_form }}?id={{ it.pca.id }}">{{ it.pca.name }}</a></h3>
+      <div class="ms-auto">
+        {% if it.date_conciliacao %}<small class="text-muted">Última reconciliação: {{ it.date_conciliacao|formatted_datetime }}</small>{% endif %}
+        {% if it.alterado_desde %}<span class="badge bg-orange-lt ms-1">SEI mudou desde a última reconciliação</span>{% endif %}
+      </div></div>
+      <form method="post">
+        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="exercicio" value="{{ exercicio }}">
+        <input type="hidden" name="item" value="{{ it.id }}">
+        <div class="table-responsive"><table class="table table-vcenter card-table table-sm">
+          <thead><tr><th style="width:2rem"></th><th>Campo</th><th>No PCA</th><th>No SEI</th><th>Observação</th></tr></thead>
+          <tbody>
+          {% for l in detalhe.linhas %}
+            <tr class="{{ l.igual ? '' : (l.aplicavel ? 'table-warning' : '') }}">
+              <td>{% if not l.igual and l.aplicavel and detalhe.pode_alterar %}<input type="checkbox" name="campos[]" value="{{ l.campo }}" checked>{% elseif l.igual %}<i class="ti ti-check text-green"></i>{% endif %}</td>
+              <td><b>{{ l.rotulo }}</b></td>
+              {% if l.campo == 'valor_global' %}
+                <td>{{ call('GlpiPlugin\\Pca\\Calculo::reais', [l.pca]) }}</td><td>{{ call('GlpiPlugin\\Pca\\Calculo::reais', [l.sei]) }}</td>
+              {% else %}
+                <td style="white-space:pre-wrap">{{ l.pca|length > 300 ? l.pca|slice(0, 300) ~ '…' : l.pca }}</td>
+                <td style="white-space:pre-wrap">{{ l.sei|length > 300 ? l.sei|slice(0, 300) ~ '…' : l.sei }}</td>
+              {% endif %}
+              <td><small class="text-muted">{{ l.nota }}</small></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table></div>
+        <div class="card-footer d-flex gap-2">
+          {% if detalhe.pode_alterar %}<button class="btn btn-primary" name="aplicar" value="1"><i class="ti ti-download"></i> Aplicar do SEI os campos marcados</button>{% endif %}
+          <a class="btn btn-outline-secondary" href="{{ url_base }}?exercicio={{ exercicio }}">Fechar</a>
+        </div>
+      </form>
+    </div>
+  {% endif %}
+
+  <div class="card"><div class="table-responsive">
+    <table class="table table-vcenter card-table table-sm table-hover">
+      <thead><tr>
+        <th>Identificador</th><th>Descrição no SEI</th><th class="text-end">Total no SEI</th><th>Contratação no PCA</th>
+        <th class="text-end">Valor global no PCA</th><th>Situação</th><th></th>
+      </tr></thead>
+      <tbody>
+      {% for i in itens %}
+        {% set cor = i.situacao == 'Confere' ? 'bg-green-lt' : (i.situacao == 'Divergente' ? 'bg-red-lt' : 'bg-yellow-lt') %}
+        <tr>
+          <td><b>{{ i.identificador }}</b><br><small class="text-muted">cód. {{ i.codigo }}</small></td>
+          <td>{{ i.descricao|length > 110 ? i.descricao|slice(0, 110) ~ '…' : i.descricao }}</td>
+          <td class="text-end">{{ call('GlpiPlugin\\Pca\\Calculo::reais', [i.valor_total]) }}</td>
+          <td>
+            {% if i.pca %}
+              <a href="{{ url_form }}?id={{ i.pca.id }}">{{ i.pca.name }}</a>
+              {% if admin %}
+                <form method="post" class="d-inline"><input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="exercicio" value="{{ exercicio }}"><input type="hidden" name="item" value="{{ i.id }}">
+                  <input type="hidden" name="contratacao" value="0">
+                  <button class="btn btn-sm btn-link text-muted p-0 ms-1" name="vincular" value="1" title="Desfazer vínculo">desvincular</button></form>
+              {% endif %}
+            {% elseif admin %}
+              <form method="post" class="d-flex gap-1"><input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="exercicio" value="{{ exercicio }}"><input type="hidden" name="item" value="{{ i.id }}">
+                <select name="contratacao" class="form-select form-select-sm" style="max-width:20rem">
+                  <option value="0">— escolher —</option>
+                  {% for s in i.sugestoes %}<option value="{{ s.id }}">★ {{ s.nome }} ({{ s.score }}%: {{ s.motivo }})</option>{% endfor %}
+                  {% for id, c in livres %}<option value="{{ id }}">{{ c.name }}</option>{% endfor %}
+                </select>
+                <button class="btn btn-sm btn-outline-primary" name="vincular" value="1">Vincular</button>
+                {% if pode_criar %}<button class="btn btn-sm btn-outline-success" name="criar" value="1" title="Criar a contratação no PCA a partir do SEI">Criar no PCA</button>{% endif %}
+              </form>
+            {% else %}—{% endif %}
+          </td>
+          <td class="text-end">{{ call('GlpiPlugin\\Pca\\Calculo::reais', [i.valor_pca]) }}</td>
+          <td><span class="badge {{ cor }}">{{ i.situacao }}</span></td>
+          <td>{% if i.pca %}<a class="btn btn-sm btn-outline-primary" href="{{ url_base }}?exercicio={{ exercicio }}&item={{ i.id }}">Reconciliar</a>{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7" class="text-center text-muted p-4">Nenhum item do SEI carregado para {{ exercicio }}.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div></div>
+
+  {% if so_pca|length and itens|length %}
+  <div class="card mt-3"><div class="card-header"><h3 class="card-title">Só no PCA — sem item correspondente no SEI ({{ so_pca|length }})</h3></div>
+    <div class="card-body">
+      {% for id, c in so_pca %}<a class="badge bg-yellow-lt me-1 mb-1" href="{{ url_form }}?id={{ id }}">{{ c.name }}</a>{% endfor %}
+      <div class="text-muted mt-2"><small>Como o SEI é o mandatário, estas contratações precisam ser incluídas no módulo ou removidas do PCA.</small></div>
+    </div>
+  </div>
+  {% endif %}
+</div>

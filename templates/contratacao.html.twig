@@ -105,4 +105,23 @@
         {{ fields.readOnlyField('_oan', call('GlpiPlugin\\Pca\\Calculo::reais', [item.fields['valor_anual_original']]), 'Valor Anual na planilha original') }}
         {{ fields.readOnlyField('_ogl', call('GlpiPlugin\\Pca\\Calculo::reais', [item.fields['valor_global_original']]), 'Valor Global na planilha original') }}
     {% endif %}
+    {{ fields.smallTitle('Programação no SEI (mandatário)', 'ti ti-refresh-dot') }}
+    {{ fields.textField('sei_identificador', item.fields['sei_identificador'], 'Identificador no SEI') }}
+    {{ fields.textField('plano', item.fields['plano'], 'Plano de Contratações') }}
+    {{ fields.textField('programa_trabalho', item.fields['programa_trabalho'], 'Programa de Trabalho') }}
+    {{ fields.textField('codigo_item', item.fields['codigo_item'], 'Código do item (CATMAT/CATSER)') }}
+    {{ fields.textField('fornecedor', item.fields['fornecedor'], 'Fornecedor') }}
+    {{ fields.textField('cnpj_fornecedor', item.fields['cnpj_fornecedor'], 'CNPJ do fornecedor') }}
+    {{ fields.textField('orcamento', item.fields['orcamento'], 'Orçamento') }}
+    {{ fields.dateField('fim_vigencia', item.fields['fim_vigencia'], 'Fim da vigência') }}
+    {{ fields.dropdownYesNo('servico', item.fields['servico'], 'Serviço') }}
+    {{ fields.dropdownYesNo('mao_de_obra', item.fields['mao_de_obra'], 'Requer mão de obra') }}
+    {{ fields.dropdownYesNo('curta_duracao', item.fields['curta_duracao'], 'Curta duração') }}
+    {{ fields.textareaField('observacao_sei', item.fields['observacao_sei'], 'Observação (SEI)') }}
+    {{ fields.textareaField('vinculos_programacoes', item.fields['vinculos_programacoes'], 'Vinculações com outras programações') }}
+    {{ fields.textareaField('planejamento_estrategico', item.fields['planejamento_estrategico'], 'Vinculações com o Planejamento Estratégico') }}
+    {% if not item.isNewItem() %}
+        {% set _sei = call('GlpiPlugin\\Pca\\Sei::itemDaContratacao', [item.fields['id']]) %}
+        {{ fields.readOnlyField('_sei', _sei ? (_sei.identificador ~ ' (Menu PCA > Reconciliação SEI)') : 'Sem vínculo com o módulo Contratações do SEI', 'SEI (mandatário)') }}
+    {% endif %}
 {% endblock %}

@@ -90,6 +90,7 @@ class Contratacao extends CommonDBTM
             $ano = self::exercicioEscolhido();
             $menu['links']['<i class="ti ti-chart-bar"></i> Painel']            = $base . 'painel.php?exercicio=' . $ano;
             $menu['links']['<i class="ti ti-arrows-diff"></i> Conciliação PNCP'] = $base . 'conciliacao.php?exercicio=' . $ano;
+            $menu['links']['<i class="ti ti-refresh-dot"></i> Reconciliação SEI'] = $base . 'sei.php?exercicio=' . $ano;
             if (Session::haveRight('plugin_pca_config', UPDATE)) {
                 $menu['links']['<i class="ti ti-settings"></i> Parâmetros'] = $base . 'config.form.php';
             }
@@ -182,7 +183,7 @@ class Contratacao extends CommonDBTM
             }
         }
         foreach (['valor_unico', 'valor_cheio_ano', 'prioridade', 'vigencia_meses', 'data_limite',
-            'valor_anual_original', 'valor_global_original'] as $c) {
+            'valor_anual_original', 'valor_global_original', 'fim_vigencia', 'servico', 'mao_de_obra', 'curta_duracao'] as $c) {
             if (array_key_exists($c, $input) && ($input[$c] === '' || $input[$c] === 'NULL')) {
                 $input[$c] = 'NULL';
             }

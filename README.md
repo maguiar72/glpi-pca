@@ -74,6 +74,17 @@ Os dois plugins são **independentes**: o plugin PNCP não conhece o PCA, e o PC
 - A API de alto nível do GLPI (v2) não expõe tipos de plugin; para integração, use a API legada (`apirest.php`) com o tipo `GlpiPlugin\Pca\Contratacao`.
 - Os textos estão só em português.
 
+## Reconciliação com o SEI (0.2.0)
+
+O módulo **Contratações** do SEI é o mandatário do PCA. Em **PCA > Reconciliação SEI**:
+
+1. Carregue a exportação do módulo (`.xls`, `.xlsx` ou `.csv`); só entram as linhas da unidade requisitante informada (padrão `CEGOVE`). O arquivo não é guardado; as linhas ficam em `glpi_plugin_pca_seiitens`.
+2. Vincule cada item do SEI a uma contratação do PCA (há sugestão por texto e valor) ou crie a contratação a partir do SEI.
+3. **Reconciliar**: o comparativo SEI × PCA mostra campo a campo; os marcados são aplicados (N.PCA, objeto, tipo, justificativa, prioridade, vigência, data limite, valor global). O histórico do GLPI registra a alteração. Nada é enviado ao SEI.
+
+Regras: prioridade do SEI é invertida em relação ao PCA ("3 - Alta" = 1); data limite = último dia do mês estimado; valor "único" grava o total em valor único e "parcelado" grava total × 12 / vigência em valor cheio no ano; vigência não numérica ("Curta duração") não é aplicada.
+Implantação em produção: `implantar-sei.sh` (backup + `rollback.sh`).
+
 ## Remoção
 
 ```bash
