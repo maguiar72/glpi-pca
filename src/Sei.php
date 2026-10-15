@@ -540,8 +540,16 @@ class Sei
             $grava = ['valor_unico' => $total, 'valor_cheio_ano' => 'NULL'];
             $nota  = $pag === '' ? 'Pagamento não definido: o total entra como valor único' : 'Pagamento único: total = valor único';
         }
+        // O total pode bater e a composição estar errada (ex.: "Parcelado" com o total em valor único)
+        $un_ok = !Calculo::vazio($c['valor_unico']);
+        $ch_ok = !Calculo::vazio($c['valor_cheio_ano']);
+        $composicao = $pag === 'Parcelado' ? (!$un_ok && $ch_ok) : ($pag === 'Único' || $pag === '' ? ($un_ok && !$ch_ok) : true);
+        if (!$composicao) {
+            $nota = trim($nota . ' (composição atual: ' . ($un_ok ? 'valor único' : '') . ($un_ok && $ch_ok ? ' + ' : '')
+                . ($ch_ok ? 'valor cheio no ano' : '') . ')');
+        }
         $add('valor_global', $vg === null ? '' : (string) $vg, $total === null ? '' : (string) $total,
-            $total !== null && $vg !== null && abs($vg - $total) < 0.01, $apl, $nota, $grava);
+            $total !== null && $vg !== null && abs($vg - $total) < 0.01 && $composicao, $apl, $nota, $grava);
 
         // Campos que só vêm da tela de detalhe / Observação; ausentes no SEI não geram divergência
         $txt = static function (string $campo, string $coluna, $valor, string $nota = '') use ($add, $c, $cmp) {
