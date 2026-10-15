@@ -25,6 +25,15 @@
   </div></div>
   {% endif %}
 
+  {% if pode_criar and sem_vinculo > 0 %}
+  <form method="post" class="mb-3" onsubmit="return confirm('Criar no PCA as {{ sem_vinculo }} contratações do SEI que ainda não têm vínculo?');">
+    <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="exercicio" value="{{ exercicio }}">
+    <button class="btn btn-success" name="criar_todos" value="1"><i class="ti ti-playlist-add"></i> Criar no PCA todas as {{ sem_vinculo }} sem vínculo</button>
+    <small class="text-muted ms-2">Cada uma nasce com os dados do SEI (apelido, pagamento e requisitante lidos da Observação).</small>
+  </form>
+  {% endif %}
+
   <div class="mb-3">
     {% for sit, qtd in resumo %}<span class="badge bg-secondary-lt me-1 mb-1">{{ sit }}: {{ qtd }}</span>{% endfor %}
     <span class="badge bg-secondary-lt me-1 mb-1">Só no PCA (sem item do SEI): {{ so_pca|length }}</span>

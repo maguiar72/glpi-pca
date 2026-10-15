@@ -27,12 +27,13 @@ class Sei
         ['tipo da contratacao', 'tipo'],
         ['necessidade de mao', 'mao_de_obra'], ['requer mao', 'mao_de_obra'], ['mao de obra', 'mao_de_obra'],
         ['justificativa', 'justificativa'],
-        ['valor total', 'valor'],
-        ['vigencia estimada', 'vigencia'],
+        ['valor total estimado', 'valor'], ['valor total r', 'valor'],
+        ['vigencia estimada em meses', 'vigencia'], ['vigencia estimada meses', 'vigencia'],
         ['mes estimado', 'mes'], ['contratacao mm', 'mes'],
-        ['fim da vigencia', 'fim_vigencia'],
+        ['fim da vigencia mm', 'fim_vigencia'],
         ['orgao', 'orgao'],
         ['setor demandante', 'setor'], ['unidade requisitante', 'setor'], ['unidade', 'setor'],
+        ['pt', 'programa'],
         ['prioridade', 'prioridade'],
         ['programa de trabalho', 'programa'],
         ['planejamento estrategico', 'planejamento'], ['vinculacoes com o planejamento', 'planejamento'],
@@ -98,7 +99,7 @@ class Sei
                 $linha = [];
                 foreach ((array) $reg as $k => $v) {
                     $chave = in_array($k, self::CHAVES, true) ? $k : self::chaveDe((string) $k);
-                    if ($chave !== null) {
+                    if ($chave !== null && (!isset($linha[$chave]) || $linha[$chave] === '')) {
                         $linha[$chave] = is_bool($v) ? ($v ? '1' : '0') : self::texto($v);
                     }
                 }
@@ -183,7 +184,7 @@ class Sei
      */
     public static function observacao(string $o): array
     {
-        $r = ['numero' => null, 'apelido' => null, 'pagamento' => null, 'orcamento' => null];
+        $r = ['numero' => null, 'apelido' => null, 'pagamento' => null, 'orcamento' => null, 'area' => null];
         $o = trim(preg_replace('/\s+/u', ' ', $o));
         if (!preg_match('~PCTIC[-\s]*(\d{4})[-\s]*(\d+)\s*(.*)$~iu', $o, $m)) {
             return $r;
@@ -191,7 +192,7 @@ class Sei
         $r['numero'] = (string) ((int) $m[2]);
         $resto = trim(preg_replace('~^-\s*~u', '', trim($m[3])));
         $parte = preg_split('~\s+-\s+~u', $resto)[0] ?? '';
-        if ($parte !== '' && !preg_match('~^(PAGAMENTO|OR[ÇC]AMENTO)\s*:~iu', $parte)) {
+        if ($parte !== '' && !preg_match('~^(PAGAMENTO|OR[ÇC]AMENTO|[ÁA]REA)\b~iu', $parte)) {
             $r['apelido'] = trim($parte);
         }
         if (preg_match('~PAGAMENTO\s*:\s*(.+?)(?:\s+-\s+|$)~iu', $resto, $p)) {
@@ -204,8 +205,11 @@ class Sei
                 $r['pagamento'] = 'Único';
             }
         }
-        if (preg_match('~OR[ÇC]AMENTO\s*:\s*(.+)$~iu', $resto, $p)) {
+        if (preg_match('~OR[ÇC]AMENTO\s*:\s*(.+?)(?:\s+-\s+|$)~iu', $resto, $p)) {
             $r['orcamento'] = trim($p[1]);
+        }
+        if (preg_match('~[ÁA]REA\s+DEMANDANTE\s*:\s*(.+?)(?:\s+-\s+|$)~iu', $resto, $p)) {
+            $r['area'] = mb_strtoupper(trim($p[1]));
         }
         return $r;
     }
@@ -273,6 +277,9 @@ class Sei
         }
         if (strpos($n, 'renovacao') !== false || strpos($n, 'prorrogacao') !== false) {
             return 'Prorrogação';
+        }
+        if (strpos($n, 'manutencao') !== false) {
+            return 'Manutenção';
         }
         return null;
     }
@@ -456,6 +463,7 @@ class Sei
         'planejamento_estrategico' => 'Planejamento estratégico',
         'vinculos_programacoes' => 'Vinculações com outras programações',
         'orcamento'      => 'Orçamento (da Observação)',
+        'requisitante'   => 'Requisitante (área demandante da Observação)',
         'sei_identificador' => 'Identificador no SEI',
     ];
 
@@ -544,6 +552,7 @@ class Sei
         $txt('name', 'name', $obs['apelido'] ?? '', 'Texto após PCTIC-aaaa-nnn na Observação');
         $txt('pagamento', 'pagamento', $obs['pagamento'] ?? '');
         $txt('orcamento', 'orcamento', $obs['orcamento'] ?? '');
+        $txt('requisitante', 'requisitante', $obs['area'] ?? '', 'ÁREA DEMANDANTE na Observação');
         $txt('processo_sei', 'processo_sei', $sei['processo'] ?? '');
         $txt('fornecedor', 'fornecedor', $sei['fornecedor'] ?? '');
         $txt('cnpj_fornecedor', 'cnpj_fornecedor', $sei['cnpj'] ?? '');
@@ -613,6 +622,9 @@ class Sei
             }
             $feitos[] = $l['rotulo'];
         }
+        if (!empty($input['tipo'])) {
+            Parametros::garantirNaLista('tipo', $input['tipo']);
+        }
         if ($feitos) {
             if (!$c->update($input)) {
                 throw new \RuntimeException('O GLPI recusou a atualização da contratação.');
@@ -665,13 +677,16 @@ class Sei
             'curta_duracao' => self::booleano($sei['curta_duracao'] ?? ''),
             'origem'       => 'SEI (módulo Contratações)',
             'necessidade'  => 'Manter',
-            'requisitante' => '',
+            'requisitante' => $obs['area'] ?? '',
             'entities_id'  => (int) ($_SESSION['glpiactive_entity'] ?? 0),
         ];
         foreach (['prioridade', 'vigencia_meses', 'data_limite', 'valor_unico', 'fim_vigencia', 'servico', 'mao_de_obra', 'curta_duracao'] as $k) {
             if ($in[$k] === null) {
                 unset($in[$k]);
             }
+        }
+        if (!empty($in['tipo'])) {
+            Parametros::garantirNaLista('tipo', $in['tipo']);
         }
         $c = new Contratacao();
         $id = $c->add($in);

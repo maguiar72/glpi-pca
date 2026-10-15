@@ -47,6 +47,17 @@ class Parametros
         return self::todos()[$nome] ?? null;
     }
 
+    /** Acrescenta um valor à lista suspensa configurada (ex.: o tipo "Manutenção" vindo do SEI). */
+    public static function garantirNaLista(string $nome, string $valor): void
+    {
+        $valor = trim($valor);
+        if ($valor === '' || isset(self::lista($nome)[$valor])) {
+            return;
+        }
+        $atual = trim((string) self::get('lista_' . $nome));
+        Config::setConfigurationValues('plugin:pca', ['lista_' . $nome => $atual === '' ? $valor : $atual . "\n" . $valor]);
+    }
+
     /** Lista suspensa no formato valor => valor. */
     public static function lista(string $nome): array
     {

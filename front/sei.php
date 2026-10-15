@@ -59,6 +59,27 @@ if (isset($_POST['criar'])) {
     Html::redirect($volta);
 }
 
+if (isset($_POST['criar_todos'])) {
+    Session::checkRight(Contratacao::$rightname, CREATE);
+    $ok = 0;
+    $falhas = [];
+    foreach (Sei::itens($exercicio) as $i) {
+        if ((int) $i['contratacao_id'] > 0) {
+            continue;
+        }
+        try {
+            Sei::criar((int) $i['id']);
+            $ok++;
+        } catch (\Throwable $e) {
+            $falhas[] = $i['identificador'] . ': ' . $e->getMessage();
+        }
+    }
+    Session::addMessageAfterRedirect("Contratações criadas no PCA a partir do SEI: {$ok}."
+        . ($falhas ? ' Falhas: ' . implode('; ', array_slice($falhas, 0, 5)) . (count($falhas) > 5 ? '…' : '') : ''),
+        false, $falhas ? WARNING : INFO);
+    Html::redirect($volta);
+}
+
 if (isset($_POST['aplicar'])) {
     try {
         $feitos = Sei::aplicar((int) $_POST['item'], (array) ($_POST['campos'] ?? []));
@@ -104,6 +125,7 @@ TemplateRenderer::getInstance()->display('@pca/sei.html.twig', [
     'detalhe' => $detalhe, 'admin' => $admin, 'setor' => Parametros::get('sei_setor'),
     'url_form' => Contratacao::getFormURL(),
     'pode_criar' => Contratacao::canCreate(),
+    'sem_vinculo' => count(array_filter($itens, static fn ($i) => !(int) $i['contratacao_id'])),
 ]);
 echo Html::scriptBlock("document.querySelectorAll('select.pca-ano').forEach(function (s) { s.addEventListener('change', function () { window.location.href = s.value; }); });");
 Html::footer();
