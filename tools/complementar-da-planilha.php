@@ -1,8 +1,8 @@
 <?php
 /**
  * Complementa as contratações do PCA com a planilha de planejamento (JSON de planilha-para-json.py).
- * A planilha tem prioridade em: apelido, N.PCA. Nos demais campos só PREENCHE o que está vazio
- * (requisitante, grupo, destinação, status, observações). O SEI continua mandatário de valores, datas,
+ * A planilha tem prioridade em: apelido, N.PCA e destinação (pelo Orçamento: CJF/JF=Ambos, CJF=CJF, JF=NUJUFE).
+ * Nos demais campos só PREENCHE o que está vazio (requisitante, grupo, status, observações). O SEI continua mandatário de valores, datas,
  * tipo, prioridade e justificativa: estes não são tocados. O número que o SEI traz na Observação
  * (PCTIC-aaaa-nnn) vai para "N. PCTIC".
  *
@@ -103,7 +103,17 @@ foreach ($DB->request(['FROM' => Contratacao::getTable(), 'WHERE' => ['exercicio
             }
         }
     }
-    if ($vazio($f['destinacao']) && $p['destinacao'] !== '') {
+    // Destinação pelo orçamento da planilha: CJF/JF => Ambos; CJF => CJF; JF => NUJUFE / Sistemas Nacionais.
+    // O orçamento da planilha é regra explícita e prevalece sobre a destinação atual; sem orçamento na planilha,
+    // vale a destinação do pca_2027.json (por N.PCA), só se vazia.
+    $mapa_orc = ['CJF/JF' => 'Ambos', 'JF/CJF' => 'Ambos', 'CJF' => 'CJF', 'JF' => 'NUJUFE / Sistemas Nacionais'];
+    $orc = strtoupper(preg_replace('~\s+~', '', (string) ($p['orcamento'] ?? '')));
+    if (isset($mapa_orc[$orc])) {
+        $dest = $dest_idx[$norm($mapa_orc[$orc])] ?? $mapa_orc[$orc];
+        if ((string) $f['destinacao'] !== $dest) {
+            $novo['destinacao'] = $dest;
+        }
+    } elseif ($vazio($f['destinacao']) && $p['destinacao'] !== '') {
         $novo['destinacao'] = $dest_idx[$norm($p['destinacao'])] ?? $p['destinacao'];
     }
     if ($vazio($f['status']) && $p['status'] !== '') {

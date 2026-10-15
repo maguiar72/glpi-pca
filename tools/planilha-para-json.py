@@ -49,6 +49,8 @@ def main():
                 "status": limpa(d.get("status")),
                 "observacoes": str(d.get("observações") or "").strip(),
                 "destinacao": dest.get(n_pca, ""),
+                # coluna "Orçamento (JF ou Corporativo)" (só a aba STI): CJF/JF, CJF ou JF
+                "orcamento": limpa(next((v for k, v in d.items() if str(k).startswith("orçamento")), "")).upper(),
             })
     json.dump(out, sys.stdout, ensure_ascii=False, indent=1)
 
