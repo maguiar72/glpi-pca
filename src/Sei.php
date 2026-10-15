@@ -73,6 +73,14 @@ class Sei
         return trim(preg_replace('/[^a-z0-9]+/', ' ', $s));
     }
 
+    /** Texto com um item por linha (vinculações): preserva as quebras e limpa cada linha. */
+    private static function lista($v): string
+    {
+        $linhas = preg_split('/\R/u', (string) $v) ?: [];
+        $linhas = array_filter(array_map(static fn ($l) => trim(preg_replace('/[ \t]+/u', ' ', $l)), $linhas), 'strlen');
+        return implode("\n", $linhas);
+    }
+
     private static function texto($v): string
     {
         return trim(preg_replace('/\s+/u', ' ', (string) $v));
@@ -100,7 +108,8 @@ class Sei
                 foreach ((array) $reg as $k => $v) {
                     $chave = in_array($k, self::CHAVES, true) ? $k : self::chaveDe((string) $k);
                     if ($chave !== null && (!isset($linha[$chave]) || $linha[$chave] === '')) {
-                        $linha[$chave] = is_bool($v) ? ($v ? '1' : '0') : self::texto($v);
+                        $linha[$chave] = is_bool($v) ? ($v ? '1' : '0')
+                            : (in_array($chave, ['planejamento', 'vinculos'], true) ? self::lista($v) : self::texto($v));
                     }
                 }
                 $linhas[] = $linha;
