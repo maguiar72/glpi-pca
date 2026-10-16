@@ -79,14 +79,21 @@ class Pncp extends CommonGLPI
                 }
             }
             if ($itens) {
-                return ['tipo' => 'plugin', 'itens' => $itens, 'qtd' => count($itens), 'ultima' => $ultima];
+                $do_plugin = ['tipo' => 'plugin', 'itens' => $itens, 'qtd' => count($itens), 'ultima' => $ultima];
             }
         }
 
         $itens = iterator_to_array($DB->request(['FROM' => 'glpi_plugin_pca_pncpitens', 'WHERE' => ['exercicio' => $exercicio]]), false);
         $ult   = $itens ? max(array_column($itens, 'date_sync')) : null;
+        $proprio = ['tipo' => 'espelho', 'itens' => $itens, 'qtd' => count($itens), 'ultima' => $ult];
 
-        return ['tipo' => 'espelho', 'itens' => $itens, 'qtd' => count($itens), 'ultima' => $ult];
+        // Vale a leitura mais recente: o botão "Reler o PNCP" grava no espelho próprio e deve prevalecer sobre
+        // o monitoramento do plugin PNCP enquanto for mais novo.
+        if (isset($do_plugin) && !($proprio['qtd'] && (string) $proprio['ultima'] > (string) $do_plugin['ultima'])) {
+            return $do_plugin;
+        }
+
+        return $proprio;
     }
 
     /** O item é de TIC? Pelo código da categoria (espelho próprio) ou pelo nome (plugin PNCP). */
