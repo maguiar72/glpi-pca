@@ -54,8 +54,17 @@ class Pncp extends CommonGLPI
         if ((new \Plugin())->isActivated('pncp') && $DB->tableExists($tabela)) {
             $itens  = [];
             $ultima = null;
+            $linhas = [];
             foreach ($DB->request(['FROM' => $tabela, 'WHERE' => ['year' => $exercicio, 'cnpj' => (string) $p['cnpj_orgao']]]) as $r) {
-                if (ltrim((string) $r['unit_code'], '0') !== ltrim((string) $p['uasg'], '0')) {
+                if (ltrim((string) $r['unit_code'], '0') === ltrim((string) $p['uasg'], '0')) {
+                    $linhas[] = $r;
+                }
+            }
+            // O espelho só insere/atualiza, nunca remove: itens que o portal já retirou ficam parados numa
+            // sincronização antiga. Vale só o que foi visto na sincronização mais recente (folga de 1 dia).
+            $corte = $linhas ? date('Y-m-d H:i:s', strtotime((string) max(array_column($linhas, 'date_sync'))) - 86400) : null;
+            foreach ($linhas as $r) {
+                if ((string) $r['date_sync'] < $corte) {
                     continue;
                 }
                 $raw    = json_decode((string) $r['raw'], true) ?: [];
